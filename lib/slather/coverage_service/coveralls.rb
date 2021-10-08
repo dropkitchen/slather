@@ -166,15 +166,32 @@ module Slather
       end
       private :github_git_info
 
+      def bitrise_git_remotes
+        remotes = `git remote -v`.split("\n").map do |info| info.split(/[\s]/).first(2) end.filter do |array| array.count == 2 end.uniq
+        remotes_dic = []
+        remotes.each do |info|
+          remotes_dic[0] = {
+            :name => info[0],
+            :url => info[1]
+          }
+        end
+
+        remotes_dic.to_json
+      end
+      private :bitrise_git_remotes
+
       def bitrise_git_info
         {
           :head => {
             :id => ENV['BITRISE_GIT_COMMIT'],
-            :committer_name => (ENV['GIT_CLONE_COMMIT_AUTHOR_NAME'] || `git log --format=%an -n 1 HEAD`.chomp || ""),
-            :committer_email => (ENV['GIT_CLONE_COMMIT_AUTHOR_EMAIL'] || `git log --format=%ae -n 1 HEAD`.chomp || ""),
-            :message => (ENV['BITRISE_GIT_MESSAGE'] || `git log --format=%s -n 1 HEAD`.chomp || "")
+            :author_name => ENV['GIT_CLONE_COMMIT_AUTHOR_NAME'],
+            :author_email => ENV['GIT_CLONE_COMMIT_AUTHOR_EMAIL'],
+            :committer_name => ENV['GIT_CLONE_COMMIT_COMMITER_NAME'],
+            :committer_email => ENV['GIT_CLONE_COMMIT_COMMITER_EMAIL'],
+            :message => ENV['BITRISE_GIT_MESSAGE']
           },
-          :branch => bitrise_branch_name
+          :branch => bitrise_branch_name,
+          :remotes => bitrise_git_remotes
         }
       end
       private :bitrise_git_info
